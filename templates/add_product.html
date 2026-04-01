@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Product</title>
+</head>
+<body>
+
+<h2>Add Product</h2>
+
+<form method="POST">
+    <input type="text" name="product_name" placeholder="Product Name" required><br><br>
+    <input type="number" name="opening_stock" placeholder="Opening Stock" required><br><br>
+    <label>Purchase Price</label>
+    <input type="number" step="0.01" name="purchase_price" required>
+
+    <label>Selling Price</label>
+<input type="number" step="0.01" name="selling_price" required>
+    <button type="submit">Add Product</button>
+</form>
+
+<a href="/products">Products</a> |
+<a href="/sales">Sales</a> |
+<a href="/stock">Stock</a> |
+<a href="/add-product">Add Product</a> |
+<a href="/add-sales">Add Sales</a> |
+<a href="/add-purchase">Add Purchase</a> |
+<a href="/report">Report</a> |
+<a href="/monthly">Monthly</a> |
+<a href="/logout">Logout</a>
+
+</body>
+</html>

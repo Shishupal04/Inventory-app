@@ -1,0 +1,21 @@
+<table border="1">
+<tr>
+<th>Date</th>
+<th>Product</th>
+<th>Quantity</th>
+<th>Action</th>
+</tr>
+
+{% for sale, product in sales_data %}
+<tr>
+<td>{{ sale.date }}</td>
+<td>{{ product.product_name }}</td>
+<td>{{ sale.quantity_sold }}</td>
+<td>
+<a href="/edit-sale/{{ sale.id }}">Edit</a>
+|
+<a href="/delete-sale/{{ sale.id }}">Delete</a>
+</td>
+</tr>
+{% endfor %}
+</table>

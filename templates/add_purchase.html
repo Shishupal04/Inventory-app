@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Purchase</title>
+</head>
+<body>
+
+<h2>Add Purchase</h2>
+
+<a href="/products">Products</a> |
+<a href="/sales">Sales</a> |
+<a href="/stock">Stock</a> |
+<a href="/add-product">Add Product</a> |
+<a href="/add-sales">Add Sales</a> |
+<a href="/add-purchase">Add Purchase</a> |
+<a href="/report">Report</a> |
+<a href="/monthly">Monthly</a> |
+<a href="/logout">Logout</a>
+
+<form method="POST">
+
+    <label>Product</label><br>
+    <select name="product_id" required>
+        {% for p in products %}
+        <option value="{{ p.id }}">{{ p.product_name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <label>Quantity</label><br>
+    <input type="number" name="quantity" required>
+    <br><br>
+
+    <label>Date</label><br>
+    <input type="date" name="date" required>
+    <br><br>
+
+    <button type="submit">Add Purchase</button>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+<h2>Edit Product</h2>
+
+<form method="POST">
+
+<label>Name</label>
+<input type="text" name="product_name" value="{{ product.product_name }}">
+
+<label>Opening Stock</label>
+<input type="number" name="opening_stock" value="{{ product.opening_stock }}">
+
+<label>Purchase Price</label>
+<input type="number" step="0.01" name="purchase_price" value="{{ product.purchase_price }}">
+
+<label>Selling Price</label>
+<input type="number" step="0.01" name="selling_price" value="{{ product.selling_price }}">
+
+<button type="submit">Update</button>
+
+</form>

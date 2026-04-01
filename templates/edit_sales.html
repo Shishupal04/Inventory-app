@@ -1,0 +1,19 @@
+<h2>Edit Sale</h2>
+
+<form method="POST">
+
+<select name="product_id">
+{% for p in products %}
+<option value="{{ p.id }}" {% if p.id == sale.product_id %}selected{% endif %}>
+{{ p.product_name }}
+</option>
+{% endfor %}
+</select>
+
+<input type="number" name="quantity_sold" value="{{ sale.quantity_sold }}">
+
+<input type="date" name="date" value="{{ sale.date }}">
+
+<button type="submit">Update</button>
+
+</form>

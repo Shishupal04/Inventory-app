@@ -1,0 +1,19 @@
+<h2>Monthly Summary</h2>
+
+<table border="1">
+<tr>
+<th>Month</th>
+<th>Total Quantity</th>
+<th>Total Revenue</th>
+<th>Total Profit</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{ row.month }}</td>
+<td>{{ row.qty }}</td>
+<td>{{ row.revenue }}</td>
+<td>{{ row.profit }}</td>
+</tr>
+{% endfor %}
+</table>

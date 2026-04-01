@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h2>Dashboard</h2>
+
+<h3>Total Products: {{ total_products }}</h3>
+<h3>Total Sold: {{ total_sold }}</h3>
+<h3>Total Profit: ₹ {{ total_profit }}</h3>
+<h3>Total Stock: {{ total_stock }}</h3>
+
+<h3>Low Stock Alert</h3>
+
+<table border="1">
+<tr>
+    <th>Product</th>
+    <th>Closing Stock</th>
+    <th>Profit</th>
+    <th>Profit</th>
+</tr>
+
+{% for item in low_stock %}
+<tr>
+    <td>{{ item.name }}</td>
+    <td>{{ item.closing }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br><br>
+
+<a href="/products">Products</a> |
+<a href="/sales">Sales</a> |
+<a href="/stock">Stock</a> |
+<a href="/add-product">Add Product</a> |
+<a href="/add-sales">Add Sales</a> |
+<a href="/add-purchase">Add Purchase</a> |
+<a href="/report">Report</a> |
+<a href="/monthly">Monthly</a> |
+<a href="/logout">Logout</a>
+
+</body>
+</html>

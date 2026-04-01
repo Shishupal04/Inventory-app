@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Sales</title>
+</head>
+<body>
+
+<h2>Add Sales</h2>
+
+<form method="POST">
+
+<select name="product_id" required>
+    <option value="">Select Product</option>
+    {% for p in products %}
+        <option value="{{ p.id }}">{{ p.product_name }}</option>
+    {% endfor %}
+</select>
+<br><br>
+
+<input type="number" name="quantity_sold" placeholder="Quantity Sold" required>
+<br><br>
+
+<input type="date" name="date" required>
+<br><br>
+
+<button type="submit">Add Sales</button>
+
+</form>
+
+<a href="/products">Products</a> |
+<a href="/sales">Sales</a> |
+<a href="/stock">Stock</a> |
+<a href="/add-product">Add Product</a> |
+<a href="/add-sales">Add Sales</a> |
+<a href="/add-purchase">Add Purchase</a> |
+<a href="/report">Report</a> |
+<a href="/monthly">Monthly</a> |
+<a href="/logout">Logout</a>
+
+</body>
+</html>

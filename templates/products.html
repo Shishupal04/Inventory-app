@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products</title>
+</head>
+<body>
+
+<h2>Your Products</h2>
+
+<a href="/add-product">Add Product</a>
+
+<table border="1">
+<tr>
+<th>Name</th>
+<th>Opening</th>
+<th>Purchase</th>
+<th>Selling</th>
+<th>Action</th>
+</tr>
+
+{% for p in products %}
+<tr>
+    <td>{{ p.product_name }}</td>
+    <td>{{ p.opening_stock }}</td>
+    <td>{{ p.purchase_price }}</td>
+    <td>{{ p.selling_price }}</td>
+    <td>
+        <a href="/edit-product/{{ p.id }}">Edit</a> |
+        <a href="/delete-product/{{ p.id }}">Delete</a>
+    </td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

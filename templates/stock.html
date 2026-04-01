@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock</title>
+</head>
+<body>
+
+<h2>Stock Summary</h2>
+
+<table border="1">
+<tr>
+    <th>Opening</th>
+    <th>Purchase</th>
+    <th>Sold</th>
+    <th>Closing</th>
+</tr>
+
+{% for s in stock_data %}
+<tr>
+    <td>{{ s.product }}</td>
+    <td>{{ s.opening }}</td>
+    <td>{{ s.sold }}</td>
+    <td>{{ s.closing }}</td> 
+    <td>{{ s.purchase }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+</body>
+</html>
