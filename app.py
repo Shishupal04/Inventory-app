@@ -52,7 +52,7 @@ class Sales(db.Model):
     profit = db.Column(db.Float)
 
 
-class Sales(db.Model):
+class Purchase(db.Model):
     __tablename__ = "purchase"
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer)
@@ -429,6 +429,4 @@ def monthly():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
