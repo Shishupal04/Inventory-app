@@ -16,16 +16,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
 
 with app.app_context():
     db.create_all()
 
-login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
 
 class User(UserMixin, db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -33,6 +34,7 @@ class User(UserMixin, db.Model):
 
 
 class Product(db.Model):
+    __tablename__ = "products"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     product_name = db.Column(db.String(100))
@@ -42,6 +44,7 @@ class Product(db.Model):
 
 
 class Sales(db.Model):
+    __tablename__ = "sales"
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer)
     quantity_sold = db.Column(db.Integer)
@@ -49,7 +52,8 @@ class Sales(db.Model):
     profit = db.Column(db.Float)
 
 
-class Purchase(db.Model):
+class Sales(db.Model):
+    __tablename__ = "purchase"
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer)
     quantity = db.Column(db.Integer)
