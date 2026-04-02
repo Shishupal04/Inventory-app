@@ -8,7 +8,6 @@ from sqlalchemy import func
 import pandas as pd
 from flask import send_file
 from io import BytesIO
-from app import db, app
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
@@ -17,8 +16,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-login_manager = LoginManager(app)
 
+models(User, Sales, Purchase)
+
+login_manager = LoginManager(app)
 
 login_manager.init_app(app)
 login_manager.login_view = "login"
