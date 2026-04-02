@@ -12,12 +12,15 @@ from io import BytesIO
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+database_url = os.environ.get("DATABASE_URL")
+
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
-models(User, Sales, Purchase)
 
 login_manager = LoginManager(app)
 
@@ -26,7 +29,7 @@ login_manager.login_view = "login"
 
 
 class User(UserMixin, db.Model):
-    __tablename__ = "user"
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -58,6 +61,11 @@ class Purchase(db.Model):
     product_id = db.Column(db.Integer)
     quantity = db.Column(db.Integer)
     date = db.Column(db.String(20))
+
+
+# ADD THIS BLOCK HERE
+with app.app_context():
+    db.create_all()
 
 
 @login_manager.user_loader
@@ -158,7 +166,7 @@ def products():
 def add_product():
     if request.method == "POST":
         product_name = request.form.get("product_name")
-        opening_stock = request.form.get("opening_stock")
+        opening_stock = int(request.form.get("opening_stock"))
         purchase_price = float(request.form.get("purchase_price"))
         selling_price = float(request.form.get("selling_price"))
 
@@ -429,19 +437,4 @@ def monthly():
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-        from werkzeug.security import generate_password_hash
-
-with app.app_context():
-    db.create_all()
-
-    if not User.query.first():
-        user = User(
-            name="Admin",
-            email="admin@example.com",
-            password=generate_password_hash("admin123")
-        )
-        db.session.add(user)
-        db.session.commit()
     app.run(debug=True)
