@@ -35,3 +35,34 @@
 
 </body>
 </html>
+{% extends "base.html" %}
+
+{% block content %}
+
+<a href="/add-product" class="btn btn-primary mb-3">Add Product</a>
+
+<table class="table table-bordered shadow">
+<tr>
+<th>Name</th>
+<th>Stock</th>
+<th>Buy</th>
+<th>Sell</th>
+<th>Action</th>
+</tr>
+
+{% for p in products %}
+<tr>
+<td>{{ p.product_name }}</td>
+<td>{{ p.opening_stock }}</td>
+<td>{{ p.purchase_price }}</td>
+<td>{{ p.selling_price }}</td>
+<td>
+<a href="/edit-product/{{p.id}}" class="btn btn-warning btn-sm">Edit</a>
+<a href="/delete-product/{{p.id}}" class="btn btn-danger btn-sm">Delete</a>
+</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

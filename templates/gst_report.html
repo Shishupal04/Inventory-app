@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h3 class="mb-3">GST Summary</h3>
+
+<div class="card shadow p-3">
+
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>GST %</th>
+<th>Taxable Value</th>
+<th>GST Amount</th>
+<th>Total</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>0%</td>
+<td>{{ gst_0_taxable }}</td>
+<td>0</td>
+<td>{{ gst_0_taxable }}</td>
+</tr>
+
+<tr>
+<td>5%</td>
+<td>{{ gst_5_taxable }}</td>
+<td>{{ gst_5_amount }}</td>
+<td>{{ gst_5_taxable + gst_5_amount }}</td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="card mt-3 p-3 shadow">
+<h5>Total GST Collected: ₹ {{ total_gst }}</h5>
+</div>
+
+{% endblock %}

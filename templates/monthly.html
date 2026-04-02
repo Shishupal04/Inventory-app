@@ -1,19 +1,39 @@
-<h2>Monthly Summary</h2>
+{% extends "base.html" %}
 
-<table border="1">
-<tr>
-<th>Month</th>
-<th>Total Quantity</th>
-<th>Total Revenue</th>
-<th>Total Profit</th>
-</tr>
+{% block content %}
 
-{% for row in data %}
-<tr>
-<td>{{ row.month }}</td>
-<td>{{ row.qty }}</td>
-<td>{{ row.revenue }}</td>
-<td>{{ row.profit }}</td>
-</tr>
-{% endfor %}
-</table>
+<h3 class="mb-3">Monthly Sales</h3>
+
+<div class="card shadow p-3">
+<canvas id="monthlyChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const labels = {{ monthly | map(attribute='month') | list | tojson }};
+const data = {{ monthly | map(attribute='total') | list | tojson }};
+
+const ctx = document.getElementById('monthlyChart');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Monthly Sales',
+            data: data
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: true
+            }
+        }
+    }
+});
+</script>
+
+{% endblock %}

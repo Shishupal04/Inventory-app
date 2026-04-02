@@ -1,47 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Dashboard</h2>
+{% block content %}
 
-<h3>Total Products: {{ total_products }}</h3>
-<h3>Total Sold: {{ total_sold }}</h3>
-<h3>Total Profit: ₹ {{ total_profit }}</h3>
-<h3>Total Stock: {{ total_stock }}</h3>
+<div class="row mb-4">
 
-<h3>Low Stock Alert</h3>
+<div class="col-md-3">
+<div class="card shadow p-3">
+<h6>Total Products</h6>
+<h3>{{ total_products }}</h3>
+</div>
+</div>
 
-<table border="1">
-<tr>
-    <th>Product</th>
-    <th>Closing Stock</th>
-    <th>Profit</th>
-    <th>Profit</th>
-</tr>
+<div class="col-md-3">
+<div class="card shadow p-3">
+<h6>Total Sold</h6>
+<h3>{{ total_sold }}</h3>
+</div>
+</div>
 
-{% for item in low_stock %}
-<tr>
-    <td>{{ item.name }}</td>
-    <td>{{ item.closing }}</td>
-</tr>
-{% endfor %}
+<div class="col-md-3">
+<div class="card shadow p-3">
+<h6>Total Profit</h6>
+<h3>{{ total_profit }}</h3>
+</div>
+</div>
 
-</table>
+</div>
 
-<br><br>
+<div class="card shadow p-3">
+<h5>Profit Trend</h5>
+<canvas id="profitChart"></canvas>
+</div>
 
-<a href="/products">Products</a> |
-<a href="/sales">Sales</a> |
-<a href="/stock">Stock</a> |
-<a href="/add-product">Add Product</a> |
-<a href="/add-sales">Add Sales</a> |
-<a href="/add-purchase">Add Purchase</a> |
-<a href="/report">Report</a> |
-<a href="/monthly">Monthly</a> |
-<a href="/logout">Logout</a>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-</body>
-</html>
+<script>
+const labels = {{ chart_labels | tojson }};
+const data = {{ chart_data | tojson }};
+
+const ctx = document.getElementById('profitChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Profit',
+            data: data,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+</script>
+
+{% endblock %}

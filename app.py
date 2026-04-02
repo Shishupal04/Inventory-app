@@ -1,3 +1,6 @@
+from functools import wraps
+from flask_login import LoginManager, login_required, current_user
+from flask import Flask, render_template, request
 import os
 from flask import Flask, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
@@ -8,8 +11,28 @@ from sqlalchemy import func
 import pandas as pd
 from flask import send_file
 from io import BytesIO
+import logging
+from collections import defaultdict
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 
 app = Flask(__name__)
+
+# ADD HERE
+
+
+def admin_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if current_user.role != "admin":
+            return "Admin access required"
+        return func(*args, **kwargs)
+    return wrapper
+
+
 app.config['SECRET_KEY'] = 'secret123'
 
 database_url = os.environ.get("DATABASE_URL")
@@ -23,7 +46,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
-
+login_manager.login_message = None
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
@@ -34,22 +57,23 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200))
+    role = db.Column(db.String(20), default="staff")
 
 
 class Product(db.Model):
-    __tablename__ = "products"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
     product_name = db.Column(db.String(100))
     opening_stock = db.Column(db.Integer)
     purchase_price = db.Column(db.Float)
     selling_price = db.Column(db.Float)
+    gst = db.Column(db.Float, default=0)
+    user_id = db.Column(db.Integer)
 
 
 class Sales(db.Model):
     __tablename__ = "sales"
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer)
+    product_id = db.Column(db.Integer, index=True)
     quantity_sold = db.Column(db.Integer)
     date = db.Column(db.String(20))
     profit = db.Column(db.Float)
@@ -58,9 +82,9 @@ class Sales(db.Model):
 class Purchase(db.Model):
     __tablename__ = "purchase"
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer)
+    product_id = db.Column(db.Integer, index=True)
     quantity = db.Column(db.Integer)
-    date = db.Column(db.String(20))
+    date = db.Column(db.String(20), index=True)
 
 
 # ADD THIS BLOCK HERE
@@ -77,42 +101,34 @@ def load_user(user_id):
 @login_required
 def dashboard():
 
-    total_products = Product.query.filter_by(user_id=current_user.id).count()
     products = Product.query.filter_by(user_id=current_user.id).all()
+    sales = Sales.query.filter_by(user_id=current_user.id).all()
 
-    total_sold = 0
-    low_stock = []
+    total_products = len(products)
+    total_sold = sum(s.quantity_sold for s in sales)
 
-    total_profit = db.session.query(func.sum(Sales.profit))\
-        .join(Product, Sales.product_id == Product.id)\
-        .filter(Product.user_id == current_user.id)\
-        .scalar()
+    total_profit = 0
+    monthly_profit = defaultdict(int)
 
-    total_profit = total_profit or 0
+    for s in sales:
+        product = Product.query.get(s.product_id)
 
-    for product in products:
+        profit = (s.selling_price - product.purchase_price) * s.quantity_sold
+        total_profit += profit
 
-        sold = db.session.query(func.sum(Sales.quantity_sold))\
-            .filter(Sales.product_id == product.id)\
-            .scalar()
+        month = s.date[:7]
+        monthly_profit[month] += profit
 
-        sold = sold or 0
-        total_sold += sold
-
-        closing = product.opening_stock - sold
-
-        if closing < 20:
-            low_stock.append({
-                "name": product.product_name,
-                "closing": closing
-            })
+    chart_labels = list(monthly_profit.keys())
+    chart_data = list(monthly_profit.values())
 
     return render_template(
         "dashboard.html",
         total_products=total_products,
         total_sold=total_sold,
         total_profit=total_profit,
-        low_stock=low_stock
+        chart_labels=chart_labels,
+        chart_data=chart_data
     )
 
 
@@ -122,8 +138,13 @@ def register():
         name = request.form.get("name")
         email = request.form.get("email")
         password = generate_password_hash(request.form.get("password"))
-
+        if User.query.filter_by(email=email).first():
+            return "Email already exists"
         user = User(name=name, email=email, password=password)
+        if not User.query.first():
+            role = "admin"
+        else:
+            role = "staff"
         db.session.add(user)
         db.session.commit()
 
@@ -137,9 +158,15 @@ def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
-
         user = User.query.filter_by(email=email).first()
-
+        if not User.query.first():
+            admin = User(
+                name="Admin",
+                email="admin@inventory.com",
+                password=generate_password_hash("admin123")
+            )
+        db.session.add(admin)
+        db.session.commit()
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for("dashboard"))
@@ -169,7 +196,8 @@ def add_product():
         opening_stock = int(request.form.get("opening_stock"))
         purchase_price = float(request.form.get("purchase_price"))
         selling_price = float(request.form.get("selling_price"))
-
+        if opening_stock < 0:
+            return "Invalid stock"
         new_product = Product(
             user_id=current_user.id,
             product_name=product_name,
@@ -177,6 +205,22 @@ def add_product():
             purchase_price=purchase_price,
             selling_price=selling_price
         )
+        gst = float(request.form["gst"])
+        product = Product(
+            product_name=product_name,
+            opening_stock=opening_stock,
+            purchase_price=purchase_price,
+            selling_price=selling_price,
+            gst=gst,
+            user_id=current_user.id
+        )
+        exists = Product.query.filter_by(
+            user_id=current_user.id,
+            product_name=product_name
+        ).first()
+
+        if exists:
+            return "Product already exists"
         db.session.add(new_product)
         db.session.commit()
 
@@ -187,13 +231,18 @@ def add_product():
 @app.route("/sales")
 @login_required
 def sales():
-    sales_data = (
-        db.session.query(Sales, Product)
-        .join(Product, Sales.product_id == Product.id)
-        .filter(Product.user_id == current_user.id)
-        .all()
+    sales = Sales.query.filter_by(user_id=current_user.id).all()
+
+    total_sales = sum(
+        s.quantity_sold * s.selling_price
+        for s in sales
     )
-    return render_template("sales.html", sales_data=sales_data)
+
+    return render_template(
+        "sales.html",
+        sales=sales,
+        total_sales=total_sales
+    )
 
 
 @app.route("/add-sales", methods=["GET", "POST"])
@@ -218,6 +267,8 @@ def add_sales():
 
         if quantity_sold > available_stock:
             return "Error: Not enough stock available"
+        if quantity_sold <= 0:
+            return "Invalid quantity"
         profit = (product.selling_price -
                   product.purchase_price) * quantity_sold
         new_sale = Sales(
@@ -235,9 +286,10 @@ def add_sales():
     return render_template("add_sales.html", products=products)
 
 
-@app.route("/delete-sale/<int:id>")
+@app.route("/delete-product/<int:id>")
 @login_required
-def delete_sale(id):
+@admin_required
+def delete_product(id):
     sale = Sales.query.get_or_404(id)
     db.session.delete(sale)
     db.session.commit()
@@ -270,36 +322,29 @@ def edit_sale(id):
 @app.route("/stock")
 @login_required
 def stock():
+
     products = Product.query.filter_by(user_id=current_user.id).all()
 
     stock_data = []
 
-    for product in products:
+    for p in products:
 
-        total_sold = db.session.query(func.sum(Sales.quantity_sold))\
-            .filter(Sales.product_id == product.id)\
-            .scalar()
+        purchased = db.session.query(
+            db.func.sum(Purchase.quantity)
+        ).filter_by(product_id=p.id).scalar() or 0
 
-        total_sold = total_sold or 0
+        sold = db.session.query(
+            db.func.sum(Sales.quantity_sold)
+        ).filter_by(product_id=p.id).scalar() or 0
 
-        total_purchase = db.session.query(func.sum(Purchase.quantity))\
-            .filter(Purchase.product_id == product.id)\
-            .scalar()
-
-        total_purchase = total_purchase or 0
-
-        closing_stock = (
-            int(product.opening_stock)
-            + int(total_purchase)
-            - int(total_sold)
-        )
+        closing = p.opening_stock + purchased - sold
 
         stock_data.append({
-            "product": product.product_name,
-            "opening": product.opening_stock,
-            "purchase": total_purchase,
-            "sold": total_sold,
-            "closing": closing_stock
+            "name": p.product_name,
+            "opening": p.opening_stock,
+            "purchased": purchased,
+            "sold": sold,
+            "closing": closing
         })
 
     return render_template("stock.html", stock_data=stock_data)
@@ -310,7 +355,11 @@ def stock():
 def delete_product(id):
     product = Product.query.get_or_404(id)
 
+    if product.user_id != current_user.id:
+        return "Unauthorized", 403
+
     # delete related sales first
+    Purchase.query.filter_by(product_id=product.id).delete()
     Sales.query.filter_by(product_id=product.id).delete()
 
     db.session.delete(product)
@@ -370,6 +419,10 @@ def report():
         .join(Product, Sales.product_id == Product.id)
         .filter(Product.user_id == current_user.id)
     )
+    revenue = sum(
+        s.quantity_sold * s.selling_price
+        for s in sales
+    )
 
     if selected_date:
         query = query.filter(Sales.date == selected_date)
@@ -377,6 +430,81 @@ def report():
     report_data = query.all()
 
     return render_template("report.html", report_data=report_data)
+
+
+@app.route("/gst-report")
+@login_required
+def gst_report():
+
+    month = request.args.get("month")
+
+    sales_query = Sales.query.filter_by(user_id=current_user.id)
+
+    if month:
+        sales_query = sales_query.filter(Sales.date.startswith(month))
+
+    sales = sales_query.all()
+
+    gst_0_taxable = 0
+    gst_5_taxable = 0
+    gst_5_amount = 0
+
+    for s in sales:
+        product = Product.query.get(s.product_id)
+        taxable = s.quantity_sold * s.selling_price
+
+        if product.gst == 0:
+            gst_0_taxable += taxable
+        elif product.gst == 5:
+            gst_5_taxable += taxable
+            gst_5_amount += taxable * 0.05
+
+    total_gst = gst_5_amount
+
+    return render_template(
+        "gst_report.html",
+        gst_0_taxable=gst_0_taxable,
+        gst_5_taxable=gst_5_taxable,
+        gst_5_amount=gst_5_amount,
+        total_gst=total_gst
+    )
+
+
+@app.route("/invoice/<int:sale_id>")
+@login_required
+def invoice(sale_id):
+
+    sale = Sales.query.get_or_404(sale_id)
+    product = Product.query.get(sale.product_id)
+
+    taxable = sale.quantity_sold * sale.selling_price
+    gst_amount = taxable * (product.gst / 100)
+    total = taxable + gst_amount
+
+    file_path = f"/tmp/invoice_{sale_id}.pdf"
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("Invoice", styles['Heading1']))
+    story.append(Spacer(1, 12))
+
+    data = [
+        ["Product", product.product_name],
+        ["Qty", sale.quantity_sold],
+        ["Price", sale.selling_price],
+        ["Taxable", taxable],
+        ["CGST", cgst],
+        ["SGST", sgst],
+        ["Total", total],
+    ]
+    table = Table(data)
+    story.append(table)
+
+    doc = SimpleDocTemplate(file_path, pagesize=A4)
+    doc.build(story)
+
+    return send_file(file_path, as_attachment=True)
 
 
 @app.route("/export")
@@ -416,24 +544,20 @@ def export():
 @login_required
 def monthly():
 
-    data = (
-        db.session.query(
-            func.substr(Sales.date, 1, 7).label("month"),
-            func.sum(Sales.quantity_sold).label("qty"),
-            func.sum(Sales.quantity_sold *
-                     Product.selling_price).label("revenue"),
-            func.sum(
-                Sales.quantity_sold *
-                (Product.selling_price - Product.purchase_price)
-            ).label("profit")
-        )
-        .join(Product, Sales.product_id == Product.id)
-        .filter(Product.user_id == current_user.id)
-        .group_by("month")
-        .all()
-    )
+    sales = Sales.query.filter_by(user_id=current_user.id).all()
 
-    return render_template("monthly.html", data=data)
+    data = defaultdict(int)
+
+    for s in sales:
+        month = s.date[:7]   # YYYY-MM
+        data[month] += s.quantity_sold * s.selling_price
+
+    monthly = [
+        {"month": k, "total": v}
+        for k, v in sorted(data.items())
+    ]
+
+    return render_template("monthly.html", monthly=monthly)
 
 
 if __name__ == "__main__":

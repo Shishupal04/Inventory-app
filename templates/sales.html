@@ -1,21 +1,52 @@
-<table border="1">
+<form method="GET" class="mb-3">
+<input type="date" name="date" class="form-control w-25 d-inline">
+<button class="btn btn-secondary">Filter</button>
+</form>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between mb-3">
+    <h3>Sales</h3>
+    <a href="/add-sales" class="btn btn-primary">Add Sale</a>
+</div>
+
+<div class="card shadow p-3">
+
+<table class="table table-striped table-bordered">
+<thead>
 <tr>
 <th>Date</th>
 <th>Product</th>
-<th>Quantity</th>
+<th>Qty</th>
+<th>Price</th>
+<th>Total</th>
 <th>Action</th>
 </tr>
+</thead>
 
-{% for sale, product in sales_data %}
+<tbody>
+{% for s in sales %}
 <tr>
-<td>{{ sale.date }}</td>
-<td>{{ product.product_name }}</td>
-<td>{{ sale.quantity_sold }}</td>
+<td>{{ s.date }}</td>
+<td>{{ s.product.product_name }}</td>
+<td>{{ s.quantity_sold }}</td>
+<td>{{ s.selling_price }}</td>
+<td>{{ (s.quantity_sold * s.selling_price) + 
+(s.quantity_sold * s.selling_price * s.product.gst / 100) }}</td>
 <td>
-<a href="/edit-sale/{{ sale.id }}">Edit</a>
-|
-<a href="/delete-sale/{{ sale.id }}">Delete</a>
+<a href="/edit-sales/{{s.id}}" class="btn btn-warning btn-sm">Edit</a>
+<a href="/delete-sales/{{s.id}}" class="btn btn-danger btn-sm">Delete</a>
 </td>
 </tr>
 {% endfor %}
+</tbody>
+
 </table>
+
+</div>
+
+{% endblock %}
+<div class="card mt-3 p-3 shadow">
+<h5>Total Sales: ₹ {{ total_sales }}</h5>
+</div>

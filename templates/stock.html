@@ -1,32 +1,43 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Stock</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-<h2>Stock Summary</h2>
+{% block content %}
 
-<table border="1">
+<div class="d-flex justify-content-between mb-3">
+    <h3>Stock</h3>
+</div>
+
+<div class="card shadow p-3">
+
+<table class="table table-bordered table-striped">
+<thead>
 <tr>
-    <th>Opening</th>
-    <th>Purchase</th>
-    <th>Sold</th>
-    <th>Closing</th>
+<th>Product</th>
+<th>Opening</th>
+<th>Purchased</th>
+<th>Sold</th>
+<th>Closing</th>
 </tr>
+</thead>
 
-{% for s in stock_data %}
+<tbody>
+{% for item in stock_data %}
 <tr>
-    <td>{{ s.product }}</td>
-    <td>{{ s.opening }}</td>
-    <td>{{ s.sold }}</td>
-    <td>{{ s.closing }}</td> 
-    <td>{{ s.purchase }}</td>
+<td>{{ item.name }}</td>
+<td>{{ item.opening }}</td>
+<td>{{ item.purchased }}</td>
+<td>{{ item.sold }}</td>
+<td>
+<span class="{% if item.closing <= 5 %}text-danger{% endif %}">
+{{ item.closing }}
+</span>
+</td>
 </tr>
 {% endfor %}
+</tbody>
 
 </table>
+<div class="alert alert-warning mt-3">
+Red values indicate low stock (≤5)
+</div>
 
-
-</body>
-</html>
+{% endblock %}

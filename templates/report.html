@@ -1,31 +1,40 @@
-<h2>Daily Sales Report</h2>
+{% extends "base.html" %}
 
-<form method="GET">
-    <input type="date" name="date">
-    <button type="submit">Filter</button>
-</form>
+{% block content %}
 
-<table border="1">
+<h3 class="mb-3">Profit Report</h3>
+
+<div class="card shadow p-3">
+
+<table class="table table-bordered table-striped">
+<thead>
 <tr>
-<th>Date</th>
 <th>Product</th>
-<th>Quantity</th>
 <th>Revenue</th>
+<th>Cost</th>
+<th>Profit</th>
 </tr>
+</thead>
 
-{% for sale, product in report_data %}
+<tbody>
+{% for r in report %}
 <tr>
-<td>{{ sale.date }}</td>
-<td>{{ product.product_name }}</td>
-<td>{{ sale.quantity_sold }}</td>
-<td>{{ sale.quantity_sold * product.selling_price }}</td>
+<td>{{ r.name }}</td>
+<td>{{ r.revenue }}</td>
+<td>{{ r.cost }}</td>
+<td class="{% if r.profit < 0 %}text-danger{% else %}text-success{% endif %}">
+{{ r.profit }}
+</td>
 </tr>
 {% endfor %}
+</tbody>
+
 </table>
 
-<br><br>
+</div>
 
-<a href="/export">Download Excel</a>
+<div class="card mt-3 p-3 shadow">
+<h5>Total Profit: ₹ {{ total_profit }}</h5>
+</div>
 
-</body>
-</html>
+{% endblock %}
