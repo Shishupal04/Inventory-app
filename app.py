@@ -8,6 +8,7 @@ from sqlalchemy import func
 import pandas as pd
 from flask import send_file
 from io import BytesIO
+from app import db, app
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret123'
@@ -429,4 +430,17 @@ def monthly():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        from werkzeug.security import generate_password_hash
+
+with app.app_context():
+    db.create_all()
+
+    if not User.query.first():
+        user = User(
+            name="Admin",
+            email="admin@example.com",
+            password=generate_password_hash("admin123")
+        )
+        db.session.add(user)
+        db.session.commit()
     app.run(debug=True)
